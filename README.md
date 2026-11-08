@@ -98,6 +98,8 @@ their grounds. USB DFU is separate from console output.
 
 ## Running with native_sim
 
+![Simulated Longan Nano LCD and RGB LED](docs/images/longannano-zephyr-sim.png)
+
 A Linux host with a C compiler, SDL2 development libraries, pkg-config, and a
 graphical desktop is required. The simulator targets 64-bit x86_64 or aarch64
 Linux and uses the host Rust target. Run the following from the project root:
