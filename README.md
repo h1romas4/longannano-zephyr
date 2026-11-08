@@ -9,23 +9,22 @@ red, green, and blue at one-second intervals.
 The display rendering and LED control are implemented in Rust (`no_std`).
 The interfaces to Zephyr drivers and Devicetree are implemented in C.
 
-The application uses a freestanding layout outside the west workspace in
-`deps/`. Zephyr is pinned to a Zephyr 4.5.0 commit as a Git submodule. The
-GD32 HAL revision is specified by that version of Zephyr's west manifest.
+The project root is a west workspace. Zephyr is pinned to a Zephyr 4.5.0
+commit as a Git submodule. The GD32 HAL revision is specified by that version
+of Zephyr's west manifest.
 
 ```text
 longannano/
+├── .west/              # Generated locally
 ├── CMakeLists.txt
 ├── Cargo.toml
 ├── Cargo.lock
+├── modules/            # Fetched by west
 ├── prj.conf
 ├── src/
 │   ├── lib.rs          # Display rendering and LED control
 │   └── main.c          # Interface to Zephyr drivers
-└── deps/
-    ├── .west/          # Generated locally
-    ├── modules/        # Fetched by west
-    └── zephyr/         # Git submodule
+└── zephyr/             # Git submodule
 ```
 
 ## Setup
@@ -39,19 +38,24 @@ git submodule update --init
 rustup target add riscv32i-unknown-none-elf
 python3 -m venv .venv
 . .venv/bin/activate
-pip install west -r deps/zephyr/scripts/requirements-base.txt
-west init -l deps/zephyr
-cd deps
+pip install west -r zephyr/scripts/requirements-base.txt
+export ZEPHYR_BASE="$PWD/zephyr"
+west init -l zephyr
 west update --narrow --fetch-opt=--depth=1 hal_gigadevice
 west sdk install -t riscv64-zephyr-elf
-cd ..
 ```
 
 `west init` is needed only once. After updating the Zephyr submodule commit,
-run `cd deps` and `west update --narrow --fetch-opt=--depth=1 hal_gigadevice`
-again to obtain the matching HAL. If additional Zephyr modules are needed,
-run `west update` for those modules in the same workspace. An existing
-compatible SDK installation can be reused.
+run `west update --narrow --fetch-opt=--depth=1 hal_gigadevice` again to obtain
+the matching HAL. If additional Zephyr modules are needed, run `west update`
+for those modules in the same workspace. An existing compatible SDK
+installation can be reused.
+
+If upgrading from the previous layout, update the submodule and initialize the
+new workspace using the commands above. Clear any `ZEPHYR_BASE` environment
+variable pointing at the old workspace. The commands below use new build
+directories because old builds refer to the previous Zephyr path. The old
+`deps/` workspace and build directories are no longer used.
 
 This project does not use Zephyr 4.5.0's official Rust module because it
 generates references to disabled GPIO nodes on Longan Nano, causing the
@@ -61,36 +65,31 @@ devices through the C bridge.
 
 ## Building and flashing
 
-Activate the virtual environment and build with CMake from the project root.
-Zephyr 4.5.0's `west build` searches for a west workspace within the
-application source directory, so this freestanding layout uses CMake directly.
+Activate the virtual environment and build with west from the project root.
 
 ```sh
 . .venv/bin/activate
-export ZEPHYR_BASE="$PWD/deps/zephyr"
-cmake -GNinja -S . -B build -DBOARD=longan_nano -DWEST_TOPDIR="$PWD/deps"
-cmake --build build
+export ZEPHYR_BASE="$PWD/zephyr"
+west build -b longan_nano -d build/west/longan .
 ```
 
-Run the flash command from the west workspace:
+Flash from the project root:
 
 ```sh
-cd deps
-west flash -d ../build
+west flash -d build/west/longan
 ```
 
 By default, `west flash` uses OpenOCD with an external programmer. To use USB
 DFU, put the board in DFU mode and run
-`west flash -d ../build --runner dfu-util` instead.
+`west flash -d build/west/longan --runner dfu-util` instead.
 
 For the Lite version, specify a separate build directory from the project root:
 
 ```sh
-cmake -GNinja -S . -B build/lite -DBOARD=longan_nano/gd32vf103/lite -DWEST_TOPDIR="$PWD/deps"
-cmake --build build/lite
+west build -b longan_nano/gd32vf103/lite -d build/west/lite .
 ```
 
-To flash the Lite version, run `west flash -d ../build/lite` from `deps/`.
+To flash the Lite version, run `west flash -d build/west/lite`.
 
 The console uses USART0 (TX: PA9, RX: PA10, 115200 baud). To see the output,
 connect the RX of a 3.3 V USB-to-serial adapter to the board's TX and connect
@@ -106,18 +105,18 @@ Linux and uses the host Rust target. Run the following from the project root:
 
 ```sh
 . .venv/bin/activate
-export ZEPHYR_BASE="$PWD/deps/zephyr"
-cmake -GNinja -S . -B build/native -DBOARD=native_sim/native/64 \
-  -DZEPHYR_TOOLCHAIN_VARIANT=host -DWEST_TOPDIR="$PWD/deps"
-cmake --build build/native
-./build/native/zephyr/zephyr.exe --rt
+export ZEPHYR_BASE="$PWD/zephyr"
+west build -b native_sim/native/64 -d build/west/native . -- \
+  -DZEPHYR_TOOLCHAIN_VARIANT=host
+west build -d build/west/native -t run
 ```
 
 The LCD and RGB LED states appear in separate windows. The LCD is displayed
 at an enlarged scale using the same 160×80-pixel resolution as the board.
 The LED window visualizes the GPIO output state; it does not simulate the
-electrical behavior of the physical LED or LCD controller. With `--rt`, the
-LED changes once per second in real time. Press Ctrl+C in the terminal to exit.
+electrical behavior of the physical LED or LCD controller. The simulator is
+configured to run in real time, so the LED changes once per second. Press
+Ctrl+C in the terminal to exit.
 
 Run the Rust rendering test with `cargo test --locked`.
 

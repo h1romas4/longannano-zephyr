@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28.0)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+find_package(Zephyr REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/zephyr" $ENV{ZEPHYR_BASE})
 project(longannano)
 
 target_sources(app PRIVATE src/main.c)

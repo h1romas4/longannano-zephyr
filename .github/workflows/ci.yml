@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
-      ZEPHYR_BASE: ${{ github.workspace }}/deps/zephyr
+      ZEPHYR_BASE: ${{ github.workspace }}/zephyr
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -37,9 +37,8 @@ jobs:
         run: |
           python3 -m venv .venv
           . .venv/bin/activate
-          pip install west -r deps/zephyr/scripts/requirements-base.txt
-          west init -l deps/zephyr
-          cd deps
+          pip install west -r zephyr/scripts/requirements-base.txt
+          west init -l zephyr
           west update --narrow --fetch-opt=--depth=1 hal_gigadevice
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
@@ -47,7 +46,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          sdk_version=$(tr -d '[:space:]' < deps/zephyr/SDK_VERSION)
+          sdk_version=$(tr -d '[:space:]' < zephyr/SDK_VERSION)
           minimal="zephyr-sdk-${sdk_version}_linux-x86_64_minimal.tar.xz"
           toolchain="toolchain_gnu_linux-x86_64_riscv64-zephyr-elf.tar.xz"
           mkdir -p "$RUNNER_TEMP/sdk-download" "$RUNNER_TEMP/zephyr-sdk/gnu"
@@ -68,16 +67,13 @@ jobs:
 
       - name: Build Longan Nano and Lite firmware
         run: |
-          cmake -GNinja -S . -B build/longan -DBOARD=longan_nano -DWEST_TOPDIR="$GITHUB_WORKSPACE/deps"
-          cmake --build build/longan
-          cmake -GNinja -S . -B build/lite -DBOARD=longan_nano/gd32vf103/lite -DWEST_TOPDIR="$GITHUB_WORKSPACE/deps"
-          cmake --build build/lite
+          west build -b longan_nano -d build/west/longan .
+          west build -b longan_nano/gd32vf103/lite -d build/west/lite .
 
       - name: Build native simulator
         run: |
-          cmake -GNinja -S . -B build/native -DBOARD=native_sim/native/64 \
-            -DZEPHYR_TOOLCHAIN_VARIANT=host -DWEST_TOPDIR="$GITHUB_WORKSPACE/deps"
-          cmake --build build/native
+          west build -b native_sim/native/64 -d build/west/native . -- \
+            -DZEPHYR_TOOLCHAIN_VARIANT=host
 
       - name: Check simulator startup
         env:
@@ -85,7 +81,7 @@ jobs:
           SDL_RENDER_DRIVER: software
         run: |
           set +e
-          timeout 5s ./build/native/zephyr/zephyr.exe --rt > "$RUNNER_TEMP/native-output.txt" 2>&1
+          timeout 15s west build -d build/west/native -t run > "$RUNNER_TEMP/native-output.txt" 2>&1
           status=$?
           set -e
           cat "$RUNNER_TEMP/native-output.txt"

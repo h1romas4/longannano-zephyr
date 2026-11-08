@@ -1,5 +1,6 @@
 /.venv/
+/.west/
 /build/
+/modules/
 /target/
-/deps/*
-!/deps/zephyr/
+/deps/
