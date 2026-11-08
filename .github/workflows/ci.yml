@@ -41,8 +41,24 @@ jobs:
           west init -l deps/zephyr
           cd deps
           west update --narrow --fetch-opt=--depth=1 hal_gigadevice
-          west sdk install -d "$RUNNER_TEMP/zephyr-sdk" -t riscv64-zephyr-elf
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install Zephyr SDK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sdk_version=$(tr -d '[:space:]' < deps/zephyr/SDK_VERSION)
+          minimal="zephyr-sdk-${sdk_version}_linux-x86_64_minimal.tar.xz"
+          toolchain="toolchain_gnu_linux-x86_64_riscv64-zephyr-elf.tar.xz"
+          mkdir -p "$RUNNER_TEMP/sdk-download" "$RUNNER_TEMP/zephyr-sdk/gnu"
+          cd "$RUNNER_TEMP/sdk-download"
+          gh release download "v${sdk_version}" --repo zephyrproject-rtos/sdk-ng \
+            --pattern sha256.sum --pattern "$minimal" --pattern "$toolchain"
+          grep -F "  $minimal" sha256.sum | sha256sum --check --strict
+          grep -F "  $toolchain" sha256.sum | sha256sum --check --strict
+          tar -xJf "$minimal" --strip-components=1 -C "$RUNNER_TEMP/zephyr-sdk"
+          tar -xJf "$toolchain" -C "$RUNNER_TEMP/zephyr-sdk/gnu"
+          "$RUNNER_TEMP/zephyr-sdk/setup.sh" -h
           echo "ZEPHYR_SDK_INSTALL_DIR=$RUNNER_TEMP/zephyr-sdk" >> "$GITHUB_ENV"
 
       - name: Check Rust formatting and tests
