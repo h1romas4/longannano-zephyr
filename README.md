@@ -120,6 +120,10 @@ Ctrl+C in the terminal to exit.
 
 Run the Rust rendering test with `cargo test --locked`.
 
+The VS Code rust-analyzer configuration checks the host target with aborting
+panics, matching the Rust static library's release build. Check the board
+target separately with `cargo check --locked --release --target riscv32i-unknown-none-elf`.
+
 For more information, see the [Zephyr Longan Nano board documentation](https://docs.zephyrproject.org/4.5.0/boards/sipeed/longan_nano/doc/index.html).
 
 ## Continuous integration

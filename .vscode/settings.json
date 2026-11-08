@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.cargo.extraEnv": {
+    "CARGO_PROFILE_DEV_PANIC": "abort"
+  }
+}
