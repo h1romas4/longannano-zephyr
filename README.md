@@ -1,0 +1,128 @@
+# Longan Nano Zephyr application
+
+A Zephyr Hello World application for the Longan Nano. It displays
+"Hello, Zephyr World" on two lines on the LCD and cycles the RGB LED through
+red, green, and blue at one-second intervals.
+
+![Longan Nano displaying Hello, Zephyr World](docs/images/longannano-zephyr.jpg)
+
+The display rendering and LED control are implemented in Rust (`no_std`).
+The interfaces to Zephyr drivers and Devicetree are implemented in C.
+
+The application uses a freestanding layout outside the west workspace in
+`deps/`. Zephyr is pinned to a Zephyr 4.5.0 commit as a Git submodule. The
+GD32 HAL revision is specified by that version of Zephyr's west manifest.
+
+```text
+longannano/
+├── CMakeLists.txt
+├── Cargo.toml
+├── Cargo.lock
+├── prj.conf
+├── src/
+│   ├── lib.rs          # Display rendering and LED control
+│   └── main.c          # Interface to Zephyr drivers
+└── deps/
+    ├── .west/          # Generated locally
+    ├── modules/        # Fetched by west
+    └── zephyr/         # Git submodule
+```
+
+## Setup
+
+Install the [Zephyr host dependencies](https://docs.zephyrproject.org/4.5.0/develop/getting_started/index.html)
+and run the commands below from this directory. Also install Rust and Cargo
+using [rustup](https://rustup.rs/) and add the Rust target for Longan Nano.
+
+```sh
+git submodule update --init
+rustup target add riscv32i-unknown-none-elf
+python3 -m venv .venv
+. .venv/bin/activate
+pip install west -r deps/zephyr/scripts/requirements-base.txt
+west init -l deps/zephyr
+cd deps
+west update --narrow --fetch-opt=--depth=1 hal_gigadevice
+west sdk install -t riscv64-zephyr-elf
+cd ..
+```
+
+`west init` is needed only once. After updating the Zephyr submodule commit,
+run `cd deps` and `west update --narrow --fetch-opt=--depth=1 hal_gigadevice`
+again to obtain the matching HAL. If additional Zephyr modules are needed,
+run `west update` for those modules in the same workspace. An existing
+compatible SDK installation can be reused.
+
+This project does not use Zephyr 4.5.0's official Rust module because it
+generates references to disabled GPIO nodes on Longan Nano, causing the
+build to fail. Instead, CMake uses Cargo to build a Rust static library
+without external dependencies and links it with Zephyr. Rust accesses
+devices through the C bridge.
+
+## Building and flashing
+
+Activate the virtual environment and build with CMake from the project root.
+Zephyr 4.5.0's `west build` searches for a west workspace within the
+application source directory, so this freestanding layout uses CMake directly.
+
+```sh
+. .venv/bin/activate
+export ZEPHYR_BASE="$PWD/deps/zephyr"
+cmake -GNinja -S . -B build -DBOARD=longan_nano -DWEST_TOPDIR="$PWD/deps"
+cmake --build build
+```
+
+Run the flash command from the west workspace:
+
+```sh
+cd deps
+west flash -d ../build
+```
+
+By default, `west flash` uses OpenOCD with an external programmer. To use USB
+DFU, put the board in DFU mode and run
+`west flash -d ../build --runner dfu-util` instead.
+
+For the Lite version, specify a separate build directory from the project root:
+
+```sh
+cmake -GNinja -S . -B build/lite -DBOARD=longan_nano/gd32vf103/lite -DWEST_TOPDIR="$PWD/deps"
+cmake --build build/lite
+```
+
+To flash the Lite version, run `west flash -d ../build/lite` from `deps/`.
+
+The console uses USART0 (TX: PA9, RX: PA10, 115200 baud). To see the output,
+connect the RX of a 3.3 V USB-to-serial adapter to the board's TX and connect
+their grounds. USB DFU is separate from console output.
+
+## Running with native_sim
+
+A Linux host with a C compiler, SDL2 development libraries, pkg-config, and a
+graphical desktop is required. The simulator targets 64-bit x86_64 or aarch64
+Linux and uses the host Rust target. Run the following from the project root:
+
+```sh
+. .venv/bin/activate
+export ZEPHYR_BASE="$PWD/deps/zephyr"
+cmake -GNinja -S . -B build/native -DBOARD=native_sim/native/64 \
+  -DZEPHYR_TOOLCHAIN_VARIANT=host -DWEST_TOPDIR="$PWD/deps"
+cmake --build build/native
+./build/native/zephyr/zephyr.exe --rt
+```
+
+The LCD and RGB LED states appear in separate windows. The LCD is displayed
+at an enlarged scale using the same 160×80-pixel resolution as the board.
+The LED window visualizes the GPIO output state; it does not simulate the
+electrical behavior of the physical LED or LCD controller. With `--rt`, the
+LED changes once per second in real time. Press Ctrl+C in the terminal to exit.
+
+Run the Rust rendering test with `cargo test --locked`.
+
+For more information, see the [Zephyr Longan Nano board documentation](https://docs.zephyrproject.org/4.5.0/boards/sipeed/longan_nano/doc/index.html).
+
+## Continuous integration
+
+GitHub Actions checks Rust formatting and tests, builds both Longan Nano
+variants and the native simulator, and checks that the simulator starts
+successfully using SDL's headless software renderer.

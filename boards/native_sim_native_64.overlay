@@ -1,0 +1,34 @@
+#include <zephyr/dt-bindings/display/panel.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	aliases {
+		led1 = &sim_led_green;
+		led2 = &sim_led_blue;
+	};
+
+	sim_led_display: sim-led-display {
+		compatible = "zephyr,sdl-dc";
+		title = "RGB LED (simulated)";
+		width = <32>;
+		height = <32>;
+		pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+	};
+};
+
+&leds {
+	sim_led_green: led_green {
+		gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+	};
+
+	sim_led_blue: led_blue {
+		gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&sdl_dc {
+	title = "Longan Nano LCD (simulated)";
+	width = <160>;
+	height = <80>;
+	pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+};
