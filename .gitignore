@@ -1,4 +1,5 @@
 /.venv/
+/.sdk/
 /.west/
 /build/
 /modules/
