@@ -34,6 +34,8 @@ and run the commands below from this directory. Also install Rust and Cargo
 using [rustup](https://rustup.rs/) and add the Rust target for Longan Nano.
 
 ```sh
+git clone https://github.com/h1romas4/longannano-zephyr
+cd longannano-zephyr
 git submodule update --init
 rustup target add riscv32i-unknown-none-elf
 python3 -m venv .venv
