@@ -38,10 +38,10 @@ git clone https://github.com/h1romas4/longannano-zephyr
 cd longannano-zephyr
 git submodule update --init
 rustup target add riscv32i-unknown-none-elf
+export ZEPHYR_BASE="$PWD/zephyr"
 python3 -m venv .venv
 . .venv/bin/activate
 pip install west -r zephyr/scripts/requirements-base.txt
-export ZEPHYR_BASE="$PWD/zephyr"
 west init -l zephyr
 west update --narrow --fetch-opt=--depth=1 hal_gigadevice
 west sdk install -t riscv64-zephyr-elf
