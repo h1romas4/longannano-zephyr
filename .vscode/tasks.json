@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build native-sim",
+      "type": "shell",
+      "command": "west build -b native_sim/native/64 -d build/west/native . -- -DZEPHYR_TOOLCHAIN_VARIANT=host",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "Build Longan Nano",
+      "type": "shell",
+      "command": "west build -b longan_nano -d build/west/longan .",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "Build Longan Nano Lite",
+      "type": "shell",
+      "command": "west build -b longan_nano/gd32vf103/lite -d build/west/lite .",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "Flash Longan Nano",
+      "type": "shell",
+      "command": "west flash -d build/west/longan",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash Longan Nano (DFU)",
+      "type": "shell",
+      "command": "west flash -d build/west/longan --runner dfu-util",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash Longan Nano Lite",
+      "type": "shell",
+      "command": "west flash -d build/west/lite",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash Longan Nano Lite (DFU)",
+      "type": "shell",
+      "command": "west flash -d build/west/lite --runner dfu-util",
+      "problemMatcher": []
+    }
+  ]
+}

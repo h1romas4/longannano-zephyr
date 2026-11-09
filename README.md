@@ -114,11 +114,21 @@ Ctrl+C in the terminal to exit.
 
 Run the Rust rendering test with `cargo test --locked`.
 
-The VS Code rust-analyzer configuration checks the host target with aborting
-panics, matching the Rust static library's release build. Check the board
-target separately with `cargo check --locked --release --target riscv32i-unknown-none-elf`.
-
 For more information, see the [Zephyr Longan Nano board documentation](https://docs.zephyrproject.org/4.5.0/boards/sipeed/longan_nano/doc/index.html).
+
+## VS Code
+
+- **Terminal:** New integrated terminals on Linux set `ZEPHYR_BASE` to the
+  project-local Zephyr and add `.venv/bin` to `PATH`. Shell startup files can
+  override these settings; if they do, set `ZEPHYR_BASE` after the shell
+  starts. SDK selection follows the existing Zephyr setup.
+- **Tasks:** Use **Tasks: Run Build Task** to build native-sim, Longan Nano or
+  Lite. **Tasks: Run Task** also offers flash tasks for both boards with
+  OpenOCD or USB DFU. Tasks require `west` on `PATH` and the Zephyr environment
+  to be configured in their terminal.
+- **rust-analyzer:** Checks the host target with aborting panics, matching the
+  Rust static library's release build. Check the board target separately with
+  `cargo check --locked --release --target riscv32i-unknown-none-elf`.
 
 ## Continuous integration
 

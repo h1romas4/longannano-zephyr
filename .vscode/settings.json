@@ -1,4 +1,8 @@
 {
+  "terminal.integrated.env.linux": {
+    "ZEPHYR_BASE": "${workspaceFolder}/zephyr",
+    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+  },
   "rust-analyzer.cargo.extraEnv": {
     "CARGO_PROFILE_DEV_PANIC": "abort"
   }
