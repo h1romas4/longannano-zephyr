@@ -51,12 +51,6 @@ the matching HAL. If additional Zephyr modules are needed, run `west update`
 for those modules in the same workspace. An existing compatible SDK
 installation can be reused.
 
-If upgrading from the previous layout, update the submodule and initialize the
-new workspace using the commands above. Clear any `ZEPHYR_BASE` environment
-variable pointing at the old workspace. The commands below use new build
-directories because old builds refer to the previous Zephyr path. The old
-`deps/` workspace and build directories are no longer used.
-
 This project does not use Zephyr 4.5.0's official Rust module because it
 generates references to disabled GPIO nodes on Longan Nano, causing the
 build to fail. Instead, CMake uses Cargo to build a Rust static library
