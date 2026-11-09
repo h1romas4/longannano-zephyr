@@ -44,8 +44,7 @@ pip install west -r zephyr/scripts/requirements-base.txt
 export ZEPHYR_BASE="$PWD/zephyr"
 west init -l zephyr
 west update --narrow --fetch-opt=--depth=1 hal_gigadevice
-export ZEPHYR_SDK_INSTALL_DIR="$PWD/.sdk"
-west sdk install --install-dir "$ZEPHYR_SDK_INSTALL_DIR" -t riscv64-zephyr-elf
+west sdk install -t riscv64-zephyr-elf
 ```
 
 `west init` is needed only once. After updating the Zephyr submodule commit,
@@ -66,7 +65,6 @@ Activate the virtual environment and build with west from the project root.
 ```sh
 . .venv/bin/activate
 export ZEPHYR_BASE="$PWD/zephyr"
-export ZEPHYR_SDK_INSTALL_DIR="$PWD/.sdk"
 west build -b longan_nano -d build/west/longan .
 ```
 
@@ -103,7 +101,6 @@ Linux and uses the host Rust target. Run the following from the project root:
 ```sh
 . .venv/bin/activate
 export ZEPHYR_BASE="$PWD/zephyr"
-export ZEPHYR_SDK_INSTALL_DIR="$PWD/.sdk"
 west build -b native_sim/native/64 -d build/west/native . -- \
   -DZEPHYR_TOOLCHAIN_VARIANT=host
 west build -d build/west/native -t run
@@ -122,10 +119,10 @@ For more information, see the [Zephyr Longan Nano board documentation](https://d
 
 ## VS Code
 
-- **Terminal:** New integrated terminals on Linux set `ZEPHYR_BASE` and
-  `ZEPHYR_SDK_INSTALL_DIR` to the project-local paths and add `.venv/bin` to
-  `PATH`. Shell startup files can override these settings; if they do, set
-  the variables after the shell starts, as shown in [Setup](#setup).
+- **Terminal:** New integrated terminals on Linux set `ZEPHYR_BASE` to the
+  project-local Zephyr and add `.venv/bin` to `PATH`. Shell startup files can
+  override these settings; if they do, set `ZEPHYR_BASE` after the shell starts,
+  as shown in [Setup](#setup).
 - **Tasks:** Use **Tasks: Run Build Task** to build native-sim, Longan Nano or
   Lite. **Tasks: Run Task** also offers flash tasks for both boards with
   OpenOCD or USB DFU. Tasks require `west` on `PATH` and the Zephyr environment

@@ -57,8 +57,7 @@ jobs:
           grep -F "  $toolchain" sha256.sum | sha256sum --check --strict
           tar -xJf "$minimal" --strip-components=1 -C "$RUNNER_TEMP/zephyr-sdk"
           tar -xJf "$toolchain" -C "$RUNNER_TEMP/zephyr-sdk/gnu"
-          "$RUNNER_TEMP/zephyr-sdk/setup.sh" -h
-          echo "ZEPHYR_SDK_INSTALL_DIR=$RUNNER_TEMP/zephyr-sdk" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/zephyr-sdk/setup.sh" -h -c
 
       - name: Check Rust formatting and tests
         run: |
