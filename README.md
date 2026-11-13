@@ -105,9 +105,43 @@ see the same investigation notes. It does not start USB communication.
 
 ### USB CDC ACM implementation status
 
-An experimental project-local USB device controller supports Zephyr's CDC ACM
-echo sample on a Longan Nano. The normal application still uses USART0; it
-does not enable CDC ACM. To build the upstream sample with LCD diagnostics:
+An experimental project-local USB device controller supports CDC ACM on a
+Longan Nano. The normal build still uses USART0. To opt in to a CDC ACM
+console for the normal LCD/LED application, use a separate build directory:
+
+```sh
+west build -b longan_nano -d build/west/usb-console . -- \
+  -DLONGAN_NANO_USB_CONSOLE=ON
+west flash -d build/west/usb-console --runner dfu-util
+```
+
+The board must be in DFU mode before flashing. Release BOOT0 and reset after
+flashing if necessary. The console redirects Zephyr's console and shell UART to
+CDC ACM; it does not enable a shell or implement an echo. The application
+prints its greeting once, after the first terminal asserts DTR; later terminal
+connections do not repeat it. The LCD and LED functionality is unchanged.
+The Lite variant also builds with `-b longan_nano/gd32vf103/lite` but has not
+been tested on hardware.
+
+The temporary test configuration uses VID `0x2fe3`, PID `0x0001` at the
+user's request. These are Zephyr's sample IDs, **not IDs for applications
+outside the Zephyr Project**. Before using or distributing an external
+application, replace them with a VID/PID you are entitled to use. They can be
+overridden at build time, for example:
+
+```sh
+west build -b longan_nano -d build/west/usb-console . -- \
+  -DLONGAN_NANO_USB_CONSOLE=ON \
+  -DCONFIG_CDC_ACM_SERIAL_VID=0xYOUR_VID \
+  -DCONFIG_CDC_ACM_SERIAL_PID=0xYOUR_PID
+```
+
+Replace the placeholders with hexadecimal values. The IDs and descriptor strings
+are configured in `boards/longan_nano_usb_console.conf`. The console build is
+experimental; on Longan Nano hardware the USB device enumerated and the full
+startup greeting was received after opening the port.
+
+To build the upstream echo sample with LCD diagnostics:
 
 ```sh
 west build -b longan_nano -d build/west/usb-cdc-test zephyr/samples/subsys/usb/cdc_acm -- \
@@ -148,9 +182,9 @@ the register readings, references, and investigation details.
 
 To flash the Lite version, run `west flash -d build/west/lite`.
 
-The console uses USART0 (TX: PA9, RX: PA10, 115200 baud). To see the output,
-connect the RX of a 3.3 V USB-to-serial adapter to the board's TX and connect
-their grounds. USB DFU is separate from console output.
+The default console uses USART0 (TX: PA9, RX: PA10, 115200 baud). To see its
+output, connect the RX of a 3.3 V USB-to-serial adapter to the board's TX and
+connect their grounds. USB DFU is separate from console output.
 
 ## Running with native_sim
 

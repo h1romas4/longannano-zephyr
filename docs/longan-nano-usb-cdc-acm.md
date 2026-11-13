@@ -14,7 +14,7 @@ USB は起動モードによって用途が異なります。ROM DFU ブート�
 
 ## このプロジェクトの現状
 
-このプロジェクトのコンソールは USART0 です。Zephyr の Longan Nano ボード定義では `zephyr,console` と `zephyr,shell-uart` が USART0 を指し、README では TX: PA9、RX: PA10、115200 baud と案内しています。USB DFU による書き込みはできますが、通常起動後の USB CDC ACM は設定されていません。
+このプロジェクトの標準ビルドのコンソールは USART0 です。Zephyr の Longan Nano ボード定義では `zephyr,console` と `zephyr,shell-uart` が USART0 を指し、README では TX: PA9、RX: PA10、115200 baud と案内しています。通常アプリで CDC ACM コンソールを試す opt-in の overlay と設定も追加しました。
 
 - [Zephyr 4.5.0 Longan Nano 共通 Devicetree](https://github.com/zephyrproject-rtos/zephyr/blob/v4.5.0/boards/sipeed/longan_nano/longan_nano-common.dtsi)
 - [プロジェクト README](../README.md)
@@ -100,4 +100,6 @@ Zephyr サブモジュールは変更せず、[プロジェクト内のモジュ
 - アクティブな転送のキャンセル・HALT、デバイス無効化・再有効化は未検証です。isochronous endpoint は公開していません。汎用 UDC としての動作を保証するものではありません。
 - LCD 診断なしの標準サンプルは Lite の 64 KB flash を超えます。minimal logging の Lite ビルドは ROM 57,896 bytes、RAM 16,248 bytes で成功しましたが、Lite 実機では未確認です。ログは USART0 に出力されます。
 
-サンプルの VID/PID は Zephyr のサンプル用です。通常アプリは引き続き USART0 を使用し、CDC ACM は有効化していません。アプリに組み込む際には、Zephyr Project 外の製品で Zephyr の VID を使用せず、適切な VID/PID を用意してください。
+通常アプリ用の [USB コンソール overlay](../boards/longan_nano_usb_console.overlay) は、実験用 USB ノードとクロック設定を再利用し、`zephyr,console` と `zephyr,shell-uart` を CDC ACM に向けます。[設定ファイル](../boards/longan_nano_usb_console.conf)で USB スタックの起動時初期化を有効にします。`LONGAN_NANO_USB_CONSOLE=ON` のときだけ適用され、標準ビルドは USART0 のままです。Longan Nano と Lite の両方でビルドでき、Longan Nano 実機では USB 列挙、LCD・LED 動作、端末接続後の挨拶全文を確認しました。Lite 実機は未確認です。挨拶は最初の端末の DTR を待って一度だけ出力し、通常アプリの LCD・LED 処理は端末接続を待ちません。設定・書き込み方法は [README](../README.md#usb-cdc-acm-implementation-status) を参照してください。
+
+ユーザーの指定により一時的に VID `0x2fe3`、PID `0x0001` を設定しています。これは Zephyr のサンプル用であり、Zephyr Project 外のアプリは利用権限のある VID/PID に変更する必要があります。ビルド時に `CONFIG_CDC_ACM_SERIAL_VID` と `CONFIG_CDC_ACM_SERIAL_PID` を上書きできます。

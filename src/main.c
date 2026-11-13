@@ -6,6 +6,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
+#if defined(CONFIG_CDC_ACM_SERIAL_INITIALIZE_AT_BOOT)
+#include <zephyr/drivers/uart.h>
+#endif
+
 #if DT_NODE_EXISTS(DT_NODELABEL(sim_led_display))
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #endif
@@ -142,9 +146,48 @@ void app_report_message(const char *message)
 	printk("%s\n", message);
 }
 
+#if defined(CONFIG_CDC_ACM_SERIAL_INITIALIZE_AT_BOOT)
+static struct k_work_delayable greeting_work;
+static const struct device *const console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+static bool console_connected;
+
+static void report_usb_greeting(struct k_work *work)
+{
+	uint32_t dtr;
+	int ret;
+
+	ARG_UNUSED(work);
+	ret = uart_line_ctrl_get(console, UART_LINE_CTRL_DTR, &dtr);
+	if (ret < 0) {
+		printk("USB console DTR check failed: %d\n", ret);
+		return;
+	}
+	if (dtr && console_connected) {
+		printk("Hello, Zephyr World (%s)\n", CONFIG_BOARD_TARGET);
+		return;
+	}
+	console_connected = dtr;
+	/* Allow the CDC transmit FIFO to drain the earlier boot banner. */
+	ret = k_work_schedule(&greeting_work, K_MSEC(dtr ? 250 : 100));
+	if (ret < 0) {
+		printk("USB console greeting scheduling failed: %d\n", ret);
+	}
+}
+#endif
+
 void app_report_greeting(void)
 {
+#if defined(CONFIG_CDC_ACM_SERIAL_INITIALIZE_AT_BOOT)
+	int ret;
+
+	k_work_init_delayable(&greeting_work, report_usb_greeting);
+	ret = k_work_schedule(&greeting_work, K_NO_WAIT);
+	if (ret < 0) {
+		printk("USB console greeting scheduling failed: %d\n", ret);
+	}
+#else
 	printk("Hello, Zephyr World (%s)\n", CONFIG_BOARD_TARGET);
+#endif
 }
 
 FUNC_NORETURN void app_panic(void)

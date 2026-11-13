@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 3.28.0)
 
 option(LONGAN_NANO_USBFS_INFO "Build the USBFS register diagnostic application" OFF)
 option(LONGAN_NANO_USB_CLOCK_TEST "Test a 96 MHz PLL and 48 MHz USB clock" OFF)
+option(LONGAN_NANO_USB_CONSOLE "Use the experimental USB CDC ACM console" OFF)
+
+if(LONGAN_NANO_USB_CONSOLE)
+  if(LONGAN_NANO_USBFS_INFO OR LONGAN_NANO_USB_CLOCK_TEST)
+    message(FATAL_ERROR "The USB console cannot be combined with USB diagnostics")
+  endif()
+  list(APPEND EXTRA_ZEPHYR_MODULES "${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb_gd32")
+  list(APPEND EXTRA_DTC_OVERLAY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/boards/longan_nano_usb_console.overlay")
+  list(APPEND EXTRA_CONF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/boards/longan_nano_usb_console.conf")
+endif()
 
 if(LONGAN_NANO_USB_CLOCK_TEST)
   if(NOT LONGAN_NANO_USBFS_INFO)
@@ -12,6 +22,10 @@ endif()
 
 find_package(Zephyr REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/zephyr" $ENV{ZEPHYR_BASE})
 project(longannano)
+
+if(LONGAN_NANO_USB_CONSOLE AND NOT CONFIG_SOC_GD32VF103)
+  message(FATAL_ERROR "The USB console is only supported on GD32VF103")
+endif()
 
 if(LONGAN_NANO_USBFS_INFO)
   if(NOT CONFIG_SOC_GD32VF103)

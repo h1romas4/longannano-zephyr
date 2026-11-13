@@ -1,0 +1,8 @@
+#include "longan_nano_usb_cdc_test.overlay"
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+	};
+};
