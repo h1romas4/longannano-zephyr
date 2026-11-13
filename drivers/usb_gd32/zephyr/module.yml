@@ -1,0 +1,6 @@
+name: longan_usb_gd32
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .

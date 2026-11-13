@@ -1,0 +1,14 @@
+description: GD32VF103 USB full-speed device controller
+
+compatible: "gd,gd32vf103-usbfs"
+
+include: base.yaml
+
+bus: usb
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true

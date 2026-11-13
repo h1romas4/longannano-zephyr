@@ -1,0 +1,9 @@
+/ {
+	cpus {
+		timebase-frequency = <24000000>;
+	};
+};
+
+&cpu {
+	clock-frequency = <96000000>;
+};

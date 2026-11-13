@@ -1,0 +1,22 @@
+/ {
+	cpus {
+		timebase-frequency = <24000000>;
+	};
+
+	soc {
+		zephyr_udc0: usb@50000000 {
+			compatible = "gd,gd32vf103-usbfs";
+			reg = <0x50000000 0x5000>;
+			interrupts = <86 0>;
+			status = "okay";
+
+			cdc_acm_uart0 {
+				compatible = "zephyr,cdc-acm-uart";
+			};
+		};
+	};
+};
+
+&cpu {
+	clock-frequency = <96000000>;
+};

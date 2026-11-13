@@ -84,6 +84,65 @@ For the Lite version, specify a separate build directory from the project root:
 west build -b longan_nano/gd32vf103/lite -d build/west/lite .
 ```
 
+To build the USBFS register diagnostic instead of the normal application, use a
+separate build directory:
+
+```sh
+west build -b longan_nano -d build/west/usbfs-info . -- \
+  -DLONGAN_NANO_USBFS_INFO=ON
+```
+
+The diagnostic reads the USBFS core configuration and reset FIFO registers,
+prints the values to USART0, and displays them on the LCD. Press and release
+the BOOT0 button to advance to the next page. It enables the USBFS AHB clock
+and resets the peripheral, but does not start USB transfers or change the
+PLL/USB clock divider. See
+[the USB CDC ACM investigation notes](docs/longan-nano-usb-cdc-acm.md) for what
+to report from the display.
+
+For the separate experimental 96 MHz PLL / 48 MHz USB clock diagnostic,
+see the same investigation notes. It does not start USB communication.
+
+### USB CDC ACM implementation status
+
+An experimental project-local USB device controller supports Zephyr's CDC ACM
+echo sample on a Longan Nano. The normal application still uses USART0; it
+does not enable CDC ACM. To build the upstream sample with LCD diagnostics:
+
+```sh
+west build -b longan_nano -d build/west/usb-cdc-test zephyr/samples/subsys/usb/cdc_acm -- \
+  -DEXTRA_ZEPHYR_MODULES="$PWD/drivers/usb_gd32" \
+  -DDTC_OVERLAY_FILE="$PWD/boards/longan_nano_usb_cdc_test.overlay" \
+  -DEXTRA_CONF_FILE="$PWD/drivers/usb_gd32/lcd_debug.conf"
+west flash -d build/west/usb-cdc-test --runner dfu-util
+```
+
+Put the board in DFU mode before flashing; after flashing, release BOOT0 and
+reset into the application if needed. On Linux the sample enumerated as
+`/dev/ttyACM0`, and binary echo and unplug/replug were tested. Port permissions
+depend on the host (often `dialout`). The sample uses Zephyr's sample VID/PID;
+applications outside the Zephyr Project must use an appropriate VID/PID of their
+own, not Zephyr's VID.
+
+The Lite build fits with minimal logging, but has not been tested on hardware:
+
+```sh
+west build -b longan_nano/gd32vf103/lite -d build/west/usb-cdc-test-lite \
+  zephyr/samples/subsys/usb/cdc_acm -- \
+  -DEXTRA_ZEPHYR_MODULES="$PWD/drivers/usb_gd32" \
+  -DDTC_OVERLAY_FILE="$PWD/boards/longan_nano_usb_cdc_test.overlay" \
+  -DEXTRA_CONF_FILE="$PWD/drivers/usb_gd32/lite.conf"
+```
+
+The driver is an experimental Zephyr 4.5.0 DWC2 adaptation, not general GD32
+USB support. It changes the test build's PLL to 96 MHz early in boot. Active
+transfer cancellation, endpoint halt, device disable/re-enable, and reset during
+transfers remain unverified; isochronous endpoints are not advertised. The
+reset FIFO readings' relationship to physical FIFO capacity remains unresolved.
+
+See the [USB CDC ACM investigation notes](docs/longan-nano-usb-cdc-acm.md) for
+the register readings, references, and investigation details.
+
 To flash the Lite version, run `west flash -d build/west/lite`.
 
 The console uses USART0 (TX: PA9, RX: PA10, 115200 baud). To see the output,

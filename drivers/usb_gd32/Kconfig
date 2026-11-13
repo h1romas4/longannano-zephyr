@@ -1,0 +1,23 @@
+config UDC_GD32VF103
+	bool "Experimental GD32VF103 USB device controller"
+	default y if DT_HAS_GD_GD32VF103_USBFS_ENABLED
+	depends on SOC_GD32VF103 && UDC_DRIVER
+	select EVENTS
+	help
+	  Project-local experimental full-speed USB device controller driver.
+
+config UDC_GD32VF103_STACK_SIZE
+	int "GD32VF103 USB driver thread stack size"
+	default 1024
+	depends on UDC_GD32VF103
+
+config UDC_GD32VF103_THREAD_PRIORITY
+	int "GD32VF103 USB driver thread priority"
+	default 8
+	depends on UDC_GD32VF103
+
+config UDC_GD32VF103_LCD_DEBUG
+	bool "Show GD32VF103 USB initialization status on the LCD"
+	depends on UDC_GD32VF103 && DISPLAY
+	help
+	  Show experimental USB initialization progress and errors on the board LCD.
