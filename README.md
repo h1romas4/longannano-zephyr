@@ -136,9 +136,12 @@ west build -b longan_nano/gd32vf103/lite -d build/west/usb-cdc-test-lite \
 
 The driver is an experimental Zephyr 4.5.0 DWC2 adaptation, not general GD32
 USB support. It changes the test build's PLL to 96 MHz early in boot. Active
-transfer cancellation, endpoint halt, device disable/re-enable, and reset during
-transfers remain unverified; isochronous endpoints are not advertised. The
-reset FIFO readings' relationship to physical FIFO capacity remains unresolved.
+transfer cancellation and device disable/re-enable remain unverified.
+Endpoint halt/clear was checked, but not with confirmed active transfers. A
+reset during repeated traffic produced a short first echo after reconnection;
+three subsequent reset trials succeeded with a 300 ms wait before echo.
+The short read remains unexplained. Isochronous endpoints are not advertised.
+The reset FIFO readings' relationship to physical FIFO capacity remains unresolved.
 
 See the [USB CDC ACM investigation notes](docs/longan-nano-usb-cdc-acm.md) for
 the register readings, references, and investigation details.

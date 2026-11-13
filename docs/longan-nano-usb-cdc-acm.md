@@ -95,7 +95,9 @@ Zephyr サブモジュールは変更せず、[プロジェクト内のモジュ
 - FIFO は RIOT と TinyUSB の 320 words を上限とし、RX に 128 words、4 つの TX FIFO に各 32 words を割り当てます。リセット時の FIFO レジスタ値との不一致は未解決です。
 - GD32 の IN endpoint NAK-effective 状態はレベル動作であり、通常の IN 割り込みマスクに含めると EP0 の割り込みが消えず列挙が停止しました。マスクから除外し、IN endpoint の無効化時は状態を期限付きでポーリングします。
 - Longan Nano 実機で Zephyr の CDC ACM echo サンプルが Linux の `/dev/ttyACM0` に列挙し、1、16、63、64、65、128、512、1024 bytes のバイナリ echo を確認しました。繰り返しオープンして 4096 bytes を 128-byte 単位で送受信し、抜き差し後の再列挙と通信も確認しました。最後の endpoint 無効化処理変更後も 1〜1024 bytes の echo を再確認しました。
-- アクティブな転送のキャンセル、endpoint halt、デバイス無効化・再有効化、転送中のリセットは未検証です。isochronous endpoint は公開していません。汎用 UDC としての動作を保証するものではありません。
+- Linux USBFS から data interface の bulk IN `0x82` と bulk OUT `0x01` に対して HALT の設定・解除を行い、各操作後の `GET_STATUS` を確認しました。その後 USB リセットと CDC ドライバの再接続を行い、1〜1024 bytes の echo に成功しました。HALT の時点で実際に転送がアクティブだったかは確認できていません。
+- 繰り返し送受信中に USBFS リセットを行ったところ、CDC 接続が切れて再接続されましたが、最初の 256-byte echo は 64 bytes しか受信できませんでした。その後の 1〜256 bytes の echo は成功しました。さらに通信中リセットを 3 回行い、ポート再オープン後 300 ms 待ってからの各 256-byte echo は成功しました。最初の短い受信の原因は未調査であり、転送中リセットからの回復を保証するものではありません。テストには上記の実機 echo と同じファームウェアを使用し、最後の診断 LED・isochronous エラー処理変更はまだ実機に書き込んでいません。
+- アクティブな転送のキャンセル・HALT、デバイス無効化・再有効化は未検証です。isochronous endpoint は公開していません。汎用 UDC としての動作を保証するものではありません。
 - LCD 診断なしの標準サンプルは Lite の 64 KB flash を超えます。minimal logging の Lite ビルドは ROM 57,896 bytes、RAM 16,248 bytes で成功しましたが、Lite 実機では未確認です。ログは USART0 に出力されます。
 
 サンプルの VID/PID は Zephyr のサンプル用です。通常アプリは引き続き USART0 を使用し、CDC ACM は有効化していません。アプリに組み込む際には、Zephyr Project 外の製品で Zephyr の VID を使用せず、適切な VID/PID を用意してください。
